@@ -16,6 +16,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+# Need offline backend to render summaries from within tf.py_func.
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf

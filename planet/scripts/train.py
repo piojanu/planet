@@ -43,10 +43,6 @@ import functools
 import os
 import sys
 
-# Need offline backend to render summaries from within tf.py_func.
-import matplotlib
-matplotlib.use('Agg')
-
 import ruamel.yaml as yaml
 import tensorflow as tf
 
