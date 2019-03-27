@@ -116,6 +116,29 @@ def gym_racecar(config, params):
   return Task('gym_racing', env_ctor, max_length, state_components)
 
 
+def gym_sokoban(config, params):
+  action_repeat = 1
+  max_length = 1000 // action_repeat
+  state_components = ['reward']
+  env_ctor = functools.partial(
+      _sokoban_env, config.batch_shape[1], max_length, 'Sokoban-small-v0')
+  return Task('gym_sokoban', env_ctor, max_length, state_components)
+
+
+def _sokoban_env(min_length, max_length, name):
+  import gym_sokoban
+  import gym
+  env = gym.make(name)
+  env = control.wrappers.SokobanWrapper(env)
+  env = control.wrappers.MinimumDuration(env, min_length)
+  env = control.wrappers.MaximumDuration(env, max_length)
+  env = control.wrappers.ObservationDict(env, 'image')
+  env = control.wrappers.ObservationToRender(env)
+  env = control.wrappers.PixelObservations(env, (64, 64), np.uint8, 'image')
+  env = control.wrappers.ConvertTo32Bit(env)
+  return env
+
+
 def _dm_control_env(action_repeat, max_length, domain, task):
   from dm_control import suite
   env = control.wrappers.DeepMindWrapper(suite.load(domain, task), (64, 64))

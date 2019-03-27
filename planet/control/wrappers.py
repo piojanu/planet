@@ -32,6 +32,7 @@ import skimage.transform
 import tensorflow as tf
 
 from planet.tools import nested
+from planet.tools.preprocess import softmax
 
 
 class ObservationDict(object):
@@ -725,3 +726,23 @@ class Async(object):
       print('Error in environment process: {}'.format(stacktrace))
       conn.send((self._EXCEPTION, stacktrace))
     conn.close()
+
+
+class SokobanWrapper(object):
+  """Wraps a Sokoban environment into a continuous control task."""
+
+  def __init__(self, env):
+    self._env = env
+
+  def __getattr__(self, name):
+    return getattr(self._env, name)
+
+  @property
+  def action_space(self):
+    return gym.spaces.Box(low=-1, high=1,
+                          shape=(self._env.action_space.n,),
+                          dtype=np.float32)
+
+  def step(self, action):
+    action = np.random.choice(self._env.action_space.n, p=softmax(action))
+    return self._env.step(action)

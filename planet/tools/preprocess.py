@@ -16,6 +16,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
 import tensorflow as tf
 
 
@@ -42,3 +43,9 @@ def postprocess(image, bits, dtype=tf.float32):
   else:
     raise NotImplementedError(dtype)
   return image
+
+
+def softmax(x):
+  """Compute softmax values for each sets of scores in x."""
+  e_x = np.exp(x - np.max(x))
+  return e_x / e_x.sum()
