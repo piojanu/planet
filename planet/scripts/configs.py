@@ -100,6 +100,7 @@ def _tasks(config, params):
         'cup_catch', 'walker_walk']
   tasks = [getattr(tasks_lib, name)(config, params) for name in tasks]
   config.isolate_envs = params.get('isolate_envs', 'thread')
+
   def common_spaces_ctor(task, action_spaces):
     env = task.env_ctor()
     env = control.wrappers.SelectObservations(env, ['image'])
