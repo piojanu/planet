@@ -60,6 +60,7 @@ def numpy_episodes(
   test = tf.data.Dataset.from_generator(
       functools.partial(loader, test_dir, shape[0], **kwargs), dtypes, shapes)
   chunking = lambda x: tf.data.Dataset.from_tensor_slices(
+      # Returns dict of image, action, reward, length tensors with num_chunks in 0 dim.
       chunk_sequence(x, shape[1], True, num_chunks))
 
   def sequence_preprocess_fn(sequence):
@@ -67,6 +68,12 @@ def numpy_episodes(
       with tf.device('/cpu:0'):
         sequence['image'] = preprocess_fn(sequence['image'])
     return sequence
+
+  # This transformation (flat_map):
+  # 1. Chunk each sequence,
+  # 2. From each sequence one can get variable number of chunks
+  #    (first dim. of a tensor is chunks number, like with batches).
+  #    Flatten to get the dataset of chunks.
   train = train.flat_map(chunking)
   train = train.shuffle(100 * shape[0])
   train = train.batch(shape[0], drop_remainder=True)
