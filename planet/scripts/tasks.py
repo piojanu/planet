@@ -117,26 +117,43 @@ def gym_racecar(config, params):
 
 
 def gym_sokoban(config, params):
-  action_repeat = 1
+  action_repeat = params.get('action_repeat', 1)
   max_length = 1000 // action_repeat
   state_components = ['reward']
   env_ctor = functools.partial(
-      _sokoban_env, config.batch_shape[1], max_length, 'Sokoban-small-v0')
+      _gym_env, action_repeat, config.batch_shape[1], max_length,
+      'Sokoban-small-v0', act_is_discrete=True, obs_is_image=True)
   return Task('gym_sokoban', env_ctor, max_length, state_components)
 
 
-def _sokoban_env(min_length, max_length, name):
-  import gym_sokoban
-  import gym
-  env = gym.make(name)
-  env = control.wrappers.SokobanWrapper(env)
-  env = control.wrappers.MinimumDuration(env, min_length)
-  env = control.wrappers.MaximumDuration(env, max_length)
-  env = control.wrappers.ObservationDict(env, 'image')
-  env = control.wrappers.ObservationToRender(env)
-  env = control.wrappers.PixelObservations(env, (64, 64), np.uint8, 'image')
-  env = control.wrappers.ConvertTo32Bit(env)
-  return env
+def gym_boxing(config, params):
+  action_repeat = params.get('action_repeat', 4)
+  max_length = 2000 // action_repeat
+  state_components = ['reward']
+  env_ctor = functools.partial(
+      _gym_env, action_repeat, config.batch_shape[1], max_length,
+      'Boxing-v0', act_is_discrete=True, obs_is_image=True)
+  return Task('gym_boxing', env_ctor, max_length, state_components)
+
+
+def gym_freeway(config, params):
+  action_repeat = params.get('action_repeat', 4)
+  max_length = 2000 // action_repeat
+  state_components = ['reward']
+  env_ctor = functools.partial(
+      _gym_env, action_repeat, config.batch_shape[1], max_length,
+      'Freeway-v0', act_is_discrete=True, obs_is_image=True)
+  return Task('gym_freeway', env_ctor, max_length, state_components)
+
+
+def gym_pong(config, params):
+  action_repeat = params.get('action_repeat', 4)
+  max_length = 2000 // action_repeat
+  state_components = ['reward']
+  env_ctor = functools.partial(
+      _gym_env, action_repeat, config.batch_shape[1], max_length,
+      'Pong-v0', act_is_discrete=True, obs_is_image=True)
+  return Task('gym_pong', env_ctor, max_length, state_components)
 
 
 def _dm_control_env(action_repeat, max_length, domain, task):
@@ -149,11 +166,17 @@ def _dm_control_env(action_repeat, max_length, domain, task):
   return env
 
 
-def _gym_env(action_repeat, min_length, max_length, name, obs_is_image=False):
+def _gym_env(action_repeat, min_length, max_length, name,
+             act_is_discrete=False, obs_is_image=False):
+  if "Sokoban" in name:
+    import gym_sokoban
   import gym
   env = gym.make(name)
   env = control.wrappers.ActionRepeat(env, action_repeat)
-  env = control.wrappers.NormalizeActions(env)
+  if act_is_discrete:
+    env = control.wrappers.DiscreteWrapper(env)
+  else:
+    env = control.wrappers.NormalizeActions(env)
   env = control.wrappers.MinimumDuration(env, min_length)
   env = control.wrappers.MaximumDuration(env, max_length)
   if obs_is_image:

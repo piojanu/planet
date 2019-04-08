@@ -728,8 +728,8 @@ class Async(object):
     conn.close()
 
 
-class SokobanWrapper(object):
-  """Wraps a Sokoban environment into a continuous control task."""
+class DiscreteWrapper(object):
+  """Wraps a discrete action-space environment into a continuous control task."""
 
   def __init__(self, env):
     self._env = env
@@ -744,5 +744,4 @@ class SokobanWrapper(object):
                           dtype=np.float32)
 
   def step(self, action):
-    action = np.random.choice(self._env.action_space.n, p=softmax(action))
-    return self._env.step(action)
+    return self._env.step(np.argmax(action))
