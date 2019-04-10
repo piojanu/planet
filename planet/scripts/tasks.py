@@ -127,7 +127,7 @@ def gym_sokoban(config, params):
 
 
 def gym_boxing(config, params):
-  action_repeat = params.get('action_repeat', 4)
+  action_repeat = params.get('action_repeat', 1)
   max_length = 2000 // action_repeat
   state_components = ['reward']
   env_ctor = functools.partial(
@@ -137,7 +137,7 @@ def gym_boxing(config, params):
 
 
 def gym_freeway(config, params):
-  action_repeat = params.get('action_repeat', 4)
+  action_repeat = params.get('action_repeat', 1)
   max_length = 2000 // action_repeat
   state_components = ['reward']
   env_ctor = functools.partial(
@@ -147,7 +147,7 @@ def gym_freeway(config, params):
 
 
 def gym_pong(config, params):
-  action_repeat = params.get('action_repeat', 4)
+  action_repeat = params.get('action_repeat', 1)
   max_length = 2000 // action_repeat
   state_components = ['reward']
   env_ctor = functools.partial(
