@@ -165,14 +165,14 @@ def train(model_fn, datasets, logdir, config):
           'train', config.train_steps, score, summary,
           batch_size=config.batch_shape[0],
           report_every=None,
-          log_every=config.train_log_every,
+          log_every=config.train_log_every,  # Keeps running average logged every...
           checkpoint_every=config.train_checkpoint_every)
     if config.test_steps:
       trainer.add_phase(
           'test', config.test_steps, score, summary,
           batch_size=config.batch_shape[0],
           report_every=config.test_steps,
-          log_every=config.test_steps,
+          log_every=config.test_steps,  # Keeps running average logged every...
           checkpoint_every=config.test_checkpoint_every)
   for saver in config.savers:
     trainer.add_saver(**saver)
@@ -199,14 +199,14 @@ def compute_losses(
           'mean': tf.zeros_like(prior['mean']),
           'stddev': tf.ones_like(prior['stddev'])}
       loss = cell.divergence_from_states(posterior, global_prior, mask)
-      loss = tf.reduce_sum(loss, 1) / tf.reduce_sum(tf.to_float(mask), 1)
+      loss = tf.reduce_sum(loss, 1) / tf.reduce_sum(tf.to_float(mask), 1)  # Time dim. reduce
     elif key in heads:
       output = heads[key](features)
       loss = -tools.mask(output.log_prob(target[key]), mask)
     else:
       message = "Loss scale references unknown head '{}'."
       raise KeyError(message.format(key))
-    # Average over the batch and normalize by the maximum chunk length.
+    # Average over the batch and normalize by the maximum pred. distance length.
     loss = tf.reduce_mean(loss)
     losses[key] = tf.check_numerics(loss, key) if debug else loss
   return losses

@@ -222,6 +222,7 @@ def simulate_step(batch_env, algo, log=True, reset=False):
         reset,
         lambda: tf.range(len(batch_env)),
         lambda: tf.cast(tf.where(batch_env.done)[:, 0], tf.int32))
+    # Here your restart done episodes, agent_indices keeps which agents to reset
     begin_episode, score, length = tf.cond(
         tf.cast(tf.shape(agent_indices)[0], tf.bool),
         lambda: _define_begin_episode(agent_indices),
