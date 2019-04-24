@@ -127,7 +127,7 @@ def gym_sokoban(config, params):
 
 
 def gym_boxing(config, params):
-  action_repeat = params.get('action_repeat', 1)
+  action_repeat = params.get('action_repeat', 4)
   max_length = 2000 // action_repeat
   state_components = ['reward']
   env_ctor = functools.partial(
@@ -137,7 +137,7 @@ def gym_boxing(config, params):
 
 
 def gym_freeway(config, params):
-  action_repeat = params.get('action_repeat', 1)
+  action_repeat = params.get('action_repeat', 4)
   max_length = 2000 // action_repeat
   state_components = ['reward']
   env_ctor = functools.partial(
@@ -147,7 +147,7 @@ def gym_freeway(config, params):
 
 
 def gym_pong(config, params):
-  action_repeat = params.get('action_repeat', 1)
+  action_repeat = params.get('action_repeat', 4)
   max_length = 2000 // action_repeat
   state_components = ['reward']
   env_ctor = functools.partial(
@@ -172,6 +172,8 @@ def _gym_env(action_repeat, min_length, max_length, name,
     import gym_sokoban
   import gym
   env = gym.make(name)
+  env = env.env  # Remove the TimeLimit wrapper
+  env.frameskip = 1  # Disable Gym frame skipping
   env = control.wrappers.ActionRepeat(env, action_repeat)
   if act_is_discrete:
     env = control.wrappers.DiscreteWrapper(env)
