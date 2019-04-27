@@ -38,7 +38,7 @@ class MPCAgent(object):
         initializer=lambda *_, **__: tf.zeros_like(x), use_resource=True)
     self._state = nested.map(var_like, state)
     self._prev_action = tf.get_local_variable(
-        'prev_action_var', shape=self._batch_env.action.shape,
+        'prev_action_var', shape=self._batch_env.action.shape,  # [env batch size, action dim.]
         initializer=lambda *_, **__: tf.zeros_like(self._batch_env.action),
         use_resource=True)
 
@@ -56,6 +56,7 @@ class MPCAgent(object):
 
   def perform(self, agent_indices, observ):
     observ = self._config.preprocess_fn(observ)
+    # Adds sequence dimension to observation tensor and then discards it
     embedded = self._config.encoder({'image': observ[:, None]})[:, 0]
     state = nested.map(
         lambda tensor: tf.gather(tensor, agent_indices),
