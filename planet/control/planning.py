@@ -23,6 +23,12 @@ from planet.control import discounted_return
 from planet import tools
 
 
+def greedy(actions, actions_num):
+  """Chooses actions greedily and encodes them as an one-hot vector"""
+  indices = tf.argmax(actions, axis=-1, output_type=tf.int32)
+  return tf.one_hot(indices, depth=actions_num, dtype=tf.float32)
+
+
 def cross_entropy_method(
         cell, objective_fn, state, obs_shape, action_shape, horizon,
         amount=1000, topk=100, iterations=10, discount=0.99,
@@ -47,21 +53,23 @@ def cross_entropy_method(
     mean, stddev = mean_and_stddev
     # Sample action proposals from belief for each env in batch, candidate and horizon step
     normal = tf.random_normal((original_batch, amount, horizon) + action_shape)
+    # Action shape: (envs batch size, candidates amount, horizon) + action_shape
     action = normal * stddev[:, None] + mean[:, None]
+    # Reshape to extended_batch format (original_batch * amount, horizon) + action_shape
+    action = tf.reshape(action, (extended_batch, horizon) + action_shape)
     if discrete_action:
+      # Normalize action scores
+      action = tf.nn.l2_normalize(action, axis=-1)
       # Apply greedy policy
-      pass
-      # Encode action as an one-hot vector
-      pass
+      postproc_action = greedy(action, action_shape[0])
     else:
       # Clip action to valid range
       action = tf.clip_by_value(action, min_action, max_action)
-    # Reshape to extended_batch format (original_batch * amount)
-    action = tf.reshape(
-        action, (extended_batch, horizon) + action_shape)
+      # Keep continuous actions
+      postproc_action = action
     # Evaluate proposal actions
     (_, state), _ = tf.nn.dynamic_rnn(
-        cell, (0 * obs, action, use_obs), initial_state=initial_state)
+        cell, (0 * obs, postproc_action, use_obs), initial_state=initial_state)
     reward = objective_fn(state)
     return_ = discounted_return.discounted_return(
         reward, length, discount)[:, 0]
@@ -84,8 +92,15 @@ def cross_entropy_method(
   mean = tf.zeros((original_batch, horizon) + action_shape)
   stddev = tf.ones((original_batch, horizon) + action_shape)
   # Run optimisation
-  mean, stddev = tf.scan(
+  mean, _ = tf.scan(
       iteration, tf.range(iterations), (mean, stddev), back_prop=False)
   # Select belief at last iterations
-  mean, stddev = mean[-1], stddev[-1]
-  return mean
+  mean = mean[-1]
+  # Take only first action, shape: (envs batch size,) + action_shape
+  mean = mean[:, 0]
+  if discrete_action:
+    # Apply greedy policy
+    return greedy(mean, action_shape[0])
+  else:
+    # Return continuous actions
+    return mean

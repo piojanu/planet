@@ -223,14 +223,22 @@ def _active_collection(config, params):
 def _define_simulation(task, config, params, horizon, batch_size):
   def objective(state, graph):
     return graph.heads['reward'](graph.cell.features_from_state(state)).mean()
+  if params.get('planner', 'cem') == 'discrete_cem':
+    discrete_action = True
+    tf.logging.info("Using CEM for discrete action-space!")
+  else:
+    discrete_action = False
   planner = functools.partial(
       control.planning.cross_entropy_method,
       amount=params.get('cem_amount', 1000),
       topk=params.get('cem_topk', 100),
       iterations=params.get('cem_iterations', 10),
-      horizon=horizon)
+      horizon=horizon,
+      discrete_action=discrete_action
+  )
   return tools.AttrDict(
       task=task,
       num_agents=batch_size,
       planner=planner,
-      objective=objective)
+      objective=objective,
+      discrete_action=discrete_action)

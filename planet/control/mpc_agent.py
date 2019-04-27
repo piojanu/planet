@@ -38,7 +38,7 @@ class MPCAgent(object):
         initializer=lambda *_, **__: tf.zeros_like(x), use_resource=True)
     self._state = nested.map(var_like, state)
     self._prev_action = tf.get_local_variable(
-        'prev_action_var', shape=self._batch_env.action.shape,  # [env batch size, action dim.]
+        'prev_action_var', shape=self._batch_env.action.shape,  # (envs batch size,) + action_shape
         initializer=lambda *_, **__: tf.zeros_like(self._batch_env.action),
         use_resource=True)
 
@@ -69,13 +69,23 @@ class MPCAgent(object):
         self._cell, self._config.objective, state,
         embedded.shape[1:].as_list(),
         prev_action.shape[1:].as_list())
-    action = action[:, 0]
     if self._config.exploration:
       scale = self._config.exploration.scale
       if self._config.exploration.schedule:
         scale *= self._config.exploration.schedule(self._step)
-      action = tfd.Normal(action, scale).sample()
-    action = tf.clip_by_value(action, -1, 1)
+      if self._config.discrete_action:
+        tf.logging.info("Exploration using e-greedy policy.")
+        action_num = self._batch_env.action.shape[1].value
+        # e-greedy policy
+        probs = tf.ones_like(action) * scale / action_num
+        probs += (1.0 - scale) * action
+        indices = tfd.Categorical(probs=probs).sample()
+        action = tf.one_hot(indices, depth=action_num, dtype=tf.float32)
+      else:
+        tf.logging.info("Exploration using random noise.")
+        # Add random noise to continuous action
+        action = tfd.Normal(action, scale).sample()
+        action = tf.clip_by_value(action, -1, 1)
     remember_action = self._prev_action.assign(action)
     remember_state = nested.map(
         lambda var, val: tf.scatter_update(var, agent_indices, val),
