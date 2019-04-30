@@ -126,34 +126,15 @@ def gym_sokoban(config, params):
   return Task('gym_sokoban', env_ctor, max_length, state_components)
 
 
-def gym_boxing(config, params):
+def gym_atari(config, params):
+  game_name = params.get('game_name', 'Freeway-v0')
   action_repeat = params.get('action_repeat', 4)
   max_length = 2000 // action_repeat
   state_components = ['reward']
   env_ctor = functools.partial(
       _gym_env, action_repeat, config.batch_shape[1], max_length,
-      'Boxing-v0', act_is_discrete=True, obs_is_image=True)
-  return Task('gym_boxing', env_ctor, max_length, state_components)
-
-
-def gym_freeway(config, params):
-  action_repeat = params.get('action_repeat', 4)
-  max_length = 2000 // action_repeat
-  state_components = ['reward']
-  env_ctor = functools.partial(
-      _gym_env, action_repeat, config.batch_shape[1], max_length,
-      'Freeway-v0', act_is_discrete=True, obs_is_image=True)
-  return Task('gym_freeway', env_ctor, max_length, state_components)
-
-
-def gym_pong(config, params):
-  action_repeat = params.get('action_repeat', 4)
-  max_length = 2000 // action_repeat
-  state_components = ['reward']
-  env_ctor = functools.partial(
-      _gym_env, action_repeat, config.batch_shape[1], max_length,
-      'Pong-v0', act_is_discrete=True, obs_is_image=True)
-  return Task('gym_pong', env_ctor, max_length, state_components)
+      game_name, act_is_discrete=True, obs_is_image=True)
+  return Task('gym_' + game_name, env_ctor, max_length, state_components)
 
 
 def _dm_control_env(action_repeat, max_length, domain, task):
